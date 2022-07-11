@@ -21,6 +21,11 @@ import {
 import { stringifyQuery } from '../../utils/helpers/query';
 import { orderToString } from '../../utils/helpers/ordering';
 
+const shortUrlTransformer = (url: ShortUrl) => {
+ url.shortUrl = `${process.env.REACT_APP_URL_PROXY}/${url.shortCode}`;
+ return url;
+}
+
 const buildShlinkBaseUrl = (url: string) => (url ? `${url}/rest/v2` : '');
 const rejectNilProps = reject(isNil);
 const normalizeOrderByInParams = (params: ShlinkShortUrlsListParams): ShlinkShortUrlsListNormalizedParams => {
@@ -39,13 +44,19 @@ export default class ShlinkApiClient {
 
   public readonly listShortUrls = async (params: ShlinkShortUrlsListParams = {}): Promise<ShlinkShortUrlsResponse> =>
     this.performRequest<{ shortUrls: ShlinkShortUrlsResponse }>('/short-urls', 'GET', normalizeOrderByInParams(params))
-      .then(({ data }) => data.shortUrls);
+      .then(resp => {
+        resp.data.shortUrls.data.forEach(shortUrlTransformer);
+        return resp;
+    }
+      )
+      .then(({ data }) => data.shortUrls)
 
   public readonly createShortUrl = async (options: ShortUrlData): Promise<ShortUrl> => {
     const filteredOptions = reject((value) => isEmpty(value) || isNil(value), options as any);
 
     return this.performRequest<ShortUrl>('/short-urls', 'POST', {}, filteredOptions)
-      .then((resp) => resp.data);
+      .then((resp) => resp.data)
+      .then(shortUrlTransformer);
   };
 
   public readonly getShortUrlVisits = async (shortCode: string, query?: ShlinkVisitsParams): Promise<ShlinkVisits> =>
@@ -74,7 +85,8 @@ export default class ShlinkApiClient {
 
   public readonly getShortUrl = async (shortCode: string, domain?: OptionalString): Promise<ShortUrl> =>
     this.performRequest<ShortUrl>(`/short-urls/${shortCode}`, 'GET', { domain })
-      .then(({ data }) => data);
+      .then(({ data }) => data)
+      .then(shortUrlTransformer);
 
   public readonly deleteShortUrl = async (shortCode: string, domain?: OptionalString): Promise<void> =>
     this.performRequest(`/short-urls/${shortCode}`, 'DELETE', { domain })
