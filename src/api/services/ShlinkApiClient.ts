@@ -22,7 +22,9 @@ import { stringifyQuery } from '../../utils/helpers/query';
 import { orderToString } from '../../utils/helpers/ordering';
 
 const shortUrlTransformer = (url: ShortUrl) => {
- url.shortUrl = `${process.env.REACT_APP_URL_PROXY}/${url.shortCode}`;
+  if(process.env.REACT_APP_URL_PROXY){
+    url.shortUrl = `${process.env.REACT_APP_URL_PROXY}/${url.shortCode}`;
+  }
  return url;
 }
 
