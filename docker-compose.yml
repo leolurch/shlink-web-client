@@ -1,13 +1,16 @@
 version: '3'
 
 services:
-  shlink_web_client_node:
-    container_name: shlink_web_client_node
-    image: node:16.15-alpine
-    command: /bin/sh -c "cd /home/shlink/www && npm install && npm run start"
-    volumes:
-      - ./:/home/shlink/www
-    ports:
-      - "3000:3000"
-      - "56745:56745"
-      - "5000:5000"
+  shlink-interface:
+    container_name: shlink-interface
+    build:
+      context: .
+      args:
+        - PROXY_URL
+    networks:
+      - proxy-manager
+
+networks:
+  proxy-manager:
+    name: proxy-manager-shlink
+    external: true
